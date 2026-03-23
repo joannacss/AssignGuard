@@ -6,7 +6,7 @@ Given HotCRP exports for reviewer preferences, paper assignments, and PC member 
 
 ## Repository Layout
 
-- `data/`: Input CSV files. The repository includes synthetic sample data.
+- `data/`: Input CSV files. The repository includes synthetic sample data. 
 - `results/`: Generated output files.
 - `scripts/`: Python scripts for running the analysis.
 - `tests/`: Reserved for automated tests.
@@ -25,7 +25,7 @@ The main script expects these CSV files by default:
 - `data/icse2027-pcassignments.csv`: Paper assignment export from HotCRP.
 - `data/icse2027-pcinfo.csv`: PC member profile export from HotCRP, including affiliation data.
 
-The current sample files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly.
+The current sample files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly. See [data/README.md](data/README.md) for detailed documentation  on these input files.
 
 ## Setup
 
