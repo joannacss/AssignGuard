@@ -32,7 +32,7 @@ The current sample files use fake names, fake emails, and dummy paper titles so 
 Clone the repository and move into it:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/joannacss/AssignGuard
 cd AssignGuard
 ```
 
