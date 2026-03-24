@@ -111,15 +111,15 @@ class FixtureAndCliTests(unittest.TestCase):
         self.assertEqual(report["summary"]["conflicted_reviewer_count"], 2)
 
         papers = {paper["paper"]: paper for paper in report["papers_with_conflicts"]}
-        self.assertEqual(papers["101"]["conflicts"][0]["keep_reviewer"]["email"], "alex.carter@example.test")
+        self.assertEqual(papers["101"]["conflicts"][0]["keep_reviewer"]["email"], "alex.carter@northbu.edu")
         self.assertEqual(
             papers["101"]["conflicts"][0]["conflict_reviewers"][0]["email"],
-            "morgan.lee@example.test",
+            "morgan.lee@northbu.edu",
         )
-        self.assertEqual(papers["102"]["conflicts"][0]["keep_reviewer"]["email"], "quinn.hughes@example.test")
+        self.assertEqual(papers["102"]["conflicts"][0]["keep_reviewer"]["email"], "quinn.hughes@cedarlabs.org")
         self.assertEqual(
             papers["102"]["conflicts"][0]["conflict_reviewers"][0]["email"],
-            "riley.chen@example.test",
+            "riley.chen@cedarlabs.org",
         )
 
     def test_main_writes_json_report_to_requested_path(self):
