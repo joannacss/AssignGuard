@@ -47,7 +47,7 @@ MAX_TOKEN_EDIT_DISTANCE = 2
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Find suspicious reviewer affiliations in the PC info CSV, including acronyms and likely typos."
+            "Find issues in reviewer affiliations in the PC info CSV, including acronyms and likely typos."
         )
     )
     parser.add_argument(

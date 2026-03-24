@@ -2,10 +2,10 @@
 
 This holds synthetic dummy data.
 - `icse2027-allprefs.csv`: it has preferences of reviewers extracted from TPMS. Here, the higher the score, the more interested that person is in that paper. A very low negative score means the person has a conflict.
-- `data/icse2027-pcassignments.csv`: paper assignments information downloaded from HotCRP. This can be obtained by: 
+- `icse2027-pcassignments.csv`: paper assignments information downloaded from HotCRP. This can be obtained by: 
   - (1) List all submitted papers https://icse2027.hotcrp.com/search?q=&t=s
   - (2) Select all > Download > Review Assignments > PC Assignments 
-- `data/icse2027-pcinfo.csv`: profile information of the PC members as exported by HotCRP. This can be obtained by: 
+- `icse2027-pcinfo.csv`: profile information of the PC members as exported by HotCRP. This can be obtained by: 
   - (1) List all reviewers https://icse2027.hotcrp.com/users?t=re
   - (2) Select all > Download > PC Info
 
