@@ -15,17 +15,6 @@ Given HotCRP exports for reviewer preferences, paper assignments, and PC member 
 
 - Python 3.9 or newer
 
-No third-party dependencies are required for the current script.
-
-## Input Files
-
-The main script expects these CSV files by default:
-
-- `data/icse2027-allprefs.csv`: Reviewer preferences per paper. Higher scores mean stronger interest. Very negative values can represent conflicts.
-- `data/icse2027-pcassignments.csv`: Paper assignment export from HotCRP.
-- `data/icse2027-pcinfo.csv`: PC member profile export from HotCRP, including affiliation data.
-
-The current sample files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly. See [data/README.md](data/README.md) for detailed documentation  on these input files.
 
 ## Setup
 
@@ -45,6 +34,8 @@ source .venv/bin/activate
 
 ## Usage
 
+
+**Using default inputs:**
 Run the tool with the default file locations:
 
 ```bash
@@ -53,6 +44,7 @@ python3 scripts/main.py
 
 This writes a JSON report to `results/icse2027-affiliation-conflicts.json`.
 
+**Using custom paths:**
 You can also provide custom paths:
 
 ```bash
@@ -62,6 +54,18 @@ python3 scripts/main.py \
   --pc-info path/to/pcinfo.csv \
   --output path/to/conflicts.json
 ```
+This writes a JSON report to the path specified in `--output`.
+
+## Input
+
+The main script expects these CSV files by default:
+
+- `--preferences` (default: `data/icse2027-allprefs.csv`): path to a CSV file containing reviewer preferences per paper. 
+- `--assignments` (default: `data/icse2027-pcassignments.csv`): path to a CSV file with containing the paper assignment export from HotCRP.
+- `--pc-info` (default: `data/icse2027-pcinfo.csv`): path to a CSV file with PC member profile export from HotCRP.
+
+
+See [data/README.md](data/README.md) for detailed documentation  on these input files. The current sample (default) files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly. 
 
 ## Output
 

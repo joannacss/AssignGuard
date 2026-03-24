@@ -20,8 +20,7 @@ REVIEW_ACTIONS = {
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Detect papers with multiple assigned reviewers from the same "
-            "institution and generate a conflict JSON report."
+            "Detect papers with multiple assigned reviewers from the same institution and generate a conflict JSON report."
         )
     )
     parser.add_argument(
