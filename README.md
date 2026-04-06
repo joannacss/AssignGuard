@@ -1,8 +1,10 @@
 # AssignGuard
 
-AssignGuard checks reviewer assignments for institutional conflicts.
+AssignGuard has a collection of utility tools to process paper submissions made on HotCRP:
 
-Given HotCRP exports for reviewer preferences, paper assignments, and PC member info, the tool finds papers where two or more assigned reviewers share the same affiliation. For each same-affiliation group, it keeps the reviewer with the highest preference score and reports the remaining reviewers as conflicts in a JSON file.
+- main.py: checks reviewer assignments for institutional conflicts. Given HotCRP exports for reviewer preferences, paper assignments, and PC member info, the tool finds papers where two or more assigned reviewers share the same affiliation. For each same-affiliation group, it keeps the reviewer with the highest preference score and reports the remaining reviewers as conflicts in a JSON file.
+- extract_references.py: given PDFs as input, it will create a new PDF containing only pages listing references.
+- find_institution_name_issues.py: utility script to help catch problems in the institution information on HotCRP.
 
 ## Repository Layout
 
@@ -35,6 +37,7 @@ source .venv/bin/activate
 ## Usage
 
 
+### main.py: script for paper assignment conflict resolution
 **Using default inputs:**
 Run the tool with the default file locations:
 
@@ -55,20 +58,7 @@ python3 scripts/main.py \
   --output path/to/conflicts.json
 ```
 This writes a JSON report to the path specified in `--output`.
-
-**Extract reference pages from PDFs:**
-You can also extract the pages that contain a paper's references section:
-
-```bash
-python3 scripts/extract_references.py path/to/paper.pdf
-python3 scripts/extract_references.py path/to/folder
-python3 scripts/extract_references.py https://example.com/paper.pdf
-```
-
-This writes one output PDF per detected input paper into `out/`, using names like
-`paper_references.pdf`.
-
-## Input
+#### Input
 
 The main script expects these CSV files by default:
 
@@ -79,7 +69,7 @@ The main script expects these CSV files by default:
 
 See [data/README.md](data/README.md) for detailed documentation  on these input files. The current sample (default) files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly. 
 
-## Output
+#### Output
 
 The generated JSON contains:
 
@@ -96,7 +86,7 @@ For each conflict group, the output includes:
 - the reviewer or reviewers marked as conflicts
 - each reviewer's assignment role and preference score
 
-## Conflict Resolution Rule
+#### Conflict Resolution Rule
 
 If multiple assigned reviewers on the same paper have the same affiliation:
 
@@ -104,15 +94,30 @@ If multiple assigned reviewers on the same paper have the same affiliation:
 2. All other reviewers from that affiliation are reported as conflicts.
 3. Ties are broken by assignment order in the assignments CSV.
 
-## Example
+#### Example
 
 With the synthetic sample data included in this repository, the tool reports two institutional conflicts:
 
 - paper `101`: two reviewers from `Northbridge University`
 - paper `102`: two reviewers from `Cedar Labs`
 
-## Notes
+#### Notes
 
 - Affiliation matching is case-insensitive and ignores repeated whitespace.
 - Reviewer emails are normalized to lowercase before matching.
 - Review actions considered by the script are `primaryreview`, `secondaryreview`, `optionalreview`, `review`, and `metareview`.
+
+
+### extract_references.py: script to extract reference pages from PDFs.
+
+You can also extract the pages that contain a paper's references section:
+
+```bash
+python3 scripts/extract_references.py path/to/paper.pdf
+python3 scripts/extract_references.py path/to/folder
+python3 scripts/extract_references.py https://example.com/paper.pdf
+```
+
+This writes one output PDF per detected input paper into `out/`, using names like
+`paper_references.pdf`.
+
