@@ -69,7 +69,7 @@ class InputResolutionTests(unittest.TestCase):
             second.write_bytes(b"%PDF-1.4\n")
             (nested / "notes.txt").write_text("ignore me", encoding="utf-8")
 
-            resolved = extract_references.resolve_inputs(str(root), root)
+            resolved = extract_references.resolve_inputs(str(root))
 
             self.assertEqual(resolved, [first.resolve(), second.resolve()])
 

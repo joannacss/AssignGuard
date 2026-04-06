@@ -115,9 +115,7 @@ You can also extract the pages that contain a paper's references section:
 ```bash
 python3 scripts/extract_references.py path/to/paper.pdf
 python3 scripts/extract_references.py path/to/folder
-python3 scripts/extract_references.py https://example.com/paper.pdf
 ```
 
 This writes one output PDF per detected input paper into `out/`, using names like
 `paper_references.pdf`.
-

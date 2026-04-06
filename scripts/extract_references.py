@@ -2,12 +2,8 @@
 
 import argparse
 import re
-import shutil
-import tempfile
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
-from urllib.request import urlopen
 
 from pypdf import PdfReader, PdfWriter
 
@@ -37,30 +33,15 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(
         description=(
-            "Extract pages containing the references section from one PDF, a folder of PDFs, "
-            "or a remote PDF URL."
+            "Extract pages containing the references section from one PDF or from all PDFs "
+            "found recursively under a folder."
         )
     )
     parser.add_argument(
         "source",
-        help="Path to a PDF, path to a folder to scan recursively, or a URL to a PDF file.",
+        help="Path to a PDF file or a folder to scan recursively for PDFs.",
     )
     return parser.parse_args()
-
-
-def is_pdf_url(value: str) -> bool:
-    """Check whether a string looks like an HTTP(S) PDF URL.
-
-    Args:
-        value: Candidate input string supplied by the user.
-
-    Returns:
-        bool: True when the value is an HTTP or HTTPS URL whose path ends in `.pdf`.
-    """
-    parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        return False
-    return parsed.path.lower().endswith(".pdf")
 
 
 def iter_pdf_files(folder: Path) -> list[Path]:
@@ -75,39 +56,19 @@ def iter_pdf_files(folder: Path) -> list[Path]:
     return sorted(path for path in folder.rglob("*.pdf") if path.is_file())
 
 
-def download_pdf(url: str, download_dir: Path) -> Path:
-    """Download a remote PDF into a temporary directory.
-
-    Args:
-        url: HTTP(S) URL pointing to a PDF file.
-        download_dir: Directory where the downloaded file should be stored.
-
-    Returns:
-        Path: Local filesystem path to the downloaded PDF.
-    """
-    target = download_dir / Path(urlparse(url).path).name
-    with urlopen(url) as response, target.open("wb") as handle:
-        shutil.copyfileobj(response, handle)
-    return target
-
-
-def resolve_inputs(source: str, download_dir: Path) -> list[Path]:
+def resolve_inputs(source: str) -> list[Path]:
     """Resolve the user input into one or more local PDF paths.
 
     Args:
-        source: Input string representing a PDF path, folder path, or PDF URL.
-        download_dir: Temporary directory for storing downloaded PDFs.
+        source: Input string representing a PDF path or folder path.
 
     Returns:
         list[Path]: Local PDF paths to process.
 
     Raises:
         FileNotFoundError: If the input path does not exist or a folder contains no PDFs.
-        ValueError: If the input is neither a PDF, a folder, nor a supported PDF URL.
+        ValueError: If the input is neither a PDF nor a folder.
     """
-    if is_pdf_url(source):
-        return [download_pdf(source, download_dir)]
-
     path = Path(source).expanduser().resolve()
     if not path.exists():
         raise FileNotFoundError(f"Input does not exist: {source}")
@@ -282,25 +243,23 @@ def main() -> None:
     writes the resulting PDFs into the repository `out/` directory.
     """
     args = parse_args()
+    pdf_paths = resolve_inputs(args.source)
+    extracted_count = 0
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        pdf_paths = resolve_inputs(args.source, Path(tmpdir))
-        extracted_count = 0
+    for pdf_path in pdf_paths:
+        result = extract_reference_pages(pdf_path, OUTPUT_DIR)
+        if result is None:
+            print(f"Skipped {pdf_path}: could not find a references section")
+            continue
 
-        for pdf_path in pdf_paths:
-            result = extract_reference_pages(pdf_path, OUTPUT_DIR)
-            if result is None:
-                print(f"Skipped {pdf_path}: could not find a references section")
-                continue
+        output_path, start_page, end_page = result
+        extracted_count += 1
+        print(
+            f"Wrote {output_path} from {pdf_path} "
+            f"(pages {start_page}-{end_page})"
+        )
 
-            output_path, start_page, end_page = result
-            extracted_count += 1
-            print(
-                f"Wrote {output_path} from {pdf_path} "
-                f"(pages {start_page}-{end_page})"
-            )
-
-        print(f"Processed {len(pdf_paths)} PDF(s); extracted references from {extracted_count}.")
+    print(f"Processed {len(pdf_paths)} PDF(s); extracted references from {extracted_count}.")
 
 
 if __name__ == "__main__":
