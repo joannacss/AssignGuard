@@ -56,6 +56,18 @@ python3 scripts/main.py \
 ```
 This writes a JSON report to the path specified in `--output`.
 
+**Extract reference pages from PDFs:**
+You can also extract the pages that contain a paper's references section:
+
+```bash
+python3 scripts/extract_references.py path/to/paper.pdf
+python3 scripts/extract_references.py path/to/folder
+python3 scripts/extract_references.py https://example.com/paper.pdf
+```
+
+This writes one output PDF per detected input paper into `out/`, using names like
+`paper_references.pdf`.
+
 ## Input
 
 The main script expects these CSV files by default:

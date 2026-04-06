@@ -1,1 +1,1 @@
-# Add Python dependencies here
+pypdf>=4,<6
