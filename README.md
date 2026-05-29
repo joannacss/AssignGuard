@@ -46,7 +46,7 @@ Run the tool with the default file locations:
 python3 scripts/find_assignments_coi.py
 ```
 
-This writes a JSON report to `results/icse2027-affiliation-conflicts.json`.
+This writes a JSON report to `results/example1-affiliation-conflicts.json`.
 
 **Using custom paths:**
 You can also provide custom paths:
@@ -118,8 +118,8 @@ After generating the conflict report, recommend replacement reviewers with the h
 python3 scripts/reassign_papers.py
 ```
 
-This reads `results/icse2027-affiliation-conflicts.json` and writes
-`results/icse2027-reassignment-recommendations.json`.
+This reads `results/example1-affiliation-conflicts.json` and writes
+`results/example1-reassignment-recommendations.json`.
 
 You can also provide custom paths and a workload threshold:
 

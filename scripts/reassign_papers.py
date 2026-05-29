@@ -11,7 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 from find_assignments_coi import load_assignments, load_pc_info, load_preferences
-from utils import EXAMPLE_DATA_DIR, RESULTS_DIR
+from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 
 
 def parse_args():
@@ -24,25 +24,25 @@ def parse_args():
     parser.add_argument(
         "--conflicts",
         type=Path,
-        default=RESULTS_DIR / "icse2027-affiliation-conflicts.json",
+        default=RESULTS_DIR / "example1-affiliation-conflicts.json",
         help="Path to the JSON output from find_assignments_coi.py.",
     )
     parser.add_argument(
         "--preferences",
         type=Path,
-        default=EXAMPLE_DATA_DIR / "icse2027-allprefs.csv",
+        default=EXAMPLE1_DATA_DIR / "icse2027-allprefs.csv",
         help="Path to the TPMS preferences CSV.",
     )
     parser.add_argument(
         "--assignments",
         type=Path,
-        default=EXAMPLE_DATA_DIR / "icse2027-pcassignments.csv",
+        default=EXAMPLE1_DATA_DIR / "icse2027-pcassignments.csv",
         help="Path to the HotCRP assignments CSV.",
     )
     parser.add_argument(
         "--pc-info",
         type=Path,
-        default=EXAMPLE_DATA_DIR / "icse2027-pcinfo.csv",
+        default=EXAMPLE1_DATA_DIR / "icse2027-pcinfo.csv",
         help="Path to the HotCRP PC info CSV.",
     )
     parser.add_argument(
@@ -54,7 +54,7 @@ def parse_args():
     parser.add_argument(
         "--output",
         type=Path,
-        default=RESULTS_DIR / "icse2027-reassignment-recommendations.json",
+        default=RESULTS_DIR / "example1-reassignment-recommendations.json",
         help="Path to the generated reassignment recommendation JSON.",
     )
     return parser.parse_args()

@@ -198,7 +198,7 @@ class ReassignmentCliTests(unittest.TestCase):
                 [
                     "reassign_papers.py",
                     "--conflicts",
-                    str(REPO_ROOT / "results" / "icse2027-affiliation-conflicts.json"),
+                    str(REPO_ROOT / "results" / "example1-affiliation-conflicts.json"),
                     "--preferences",
                     str(REPO_ROOT / "data" / "example1" / "icse2027-allprefs.csv"),
                     "--assignments",

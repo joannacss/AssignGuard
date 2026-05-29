@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from utils import EXAMPLE_DATA_DIR, RESULTS_DIR
+from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 
 GENERIC_AFFILIATION_WORDS = {
     "academy",
@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument(
         "--pc-info",
         type=Path,
-        default=EXAMPLE_DATA_DIR / "icse2027-pcinfo.csv",
+        default=EXAMPLE1_DATA_DIR / "icse2027-pcinfo.csv",
         help="Path to the HotCRP PC info CSV.",
     )
     parser.add_argument(
