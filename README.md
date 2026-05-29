@@ -2,13 +2,13 @@
 
 AssignGuard has a collection of utility tools to process paper submissions made on HotCRP:
 
-- main.py: checks reviewer assignments for institutional conflicts. Given HotCRP exports for reviewer preferences, paper assignments, and PC member info, the tool finds papers where two or more assigned reviewers share the same affiliation. For each same-affiliation group, it keeps the reviewer with the highest preference score and reports the remaining reviewers as conflicts in a JSON file.
+- find_assignments_coi.py: checks reviewer assignments for institutional conflicts. Given HotCRP exports for reviewer preferences, paper assignments, and PC member info, the tool finds papers where two or more assigned reviewers share the same affiliation. For each same-affiliation group, it keeps the reviewer with the highest preference score and reports the remaining reviewers as conflicts in a JSON file.
 - extract_references.py: given PDFs as input, it will create a new PDF containing only pages listing references.
 - find_institution_name_issues.py: utility script to help catch problems in the institution information on HotCRP.
 
 ## Repository Layout
 
-- `data/`: Input CSV files. The repository includes synthetic sample data. 
+- `data/`: Input CSV files with synthetic samples.
 - `results/`: Generated output files.
 - `scripts/`: Python scripts for running the analysis.
 - `tests/`: Reserved for automated tests.
@@ -37,12 +37,12 @@ source .venv/bin/activate
 ## Usage
 
 
-### main.py: script for paper assignment conflict resolution
+### find_assignments_coi.py: script for paper assignment conflict resolution
 **Using default inputs:**
 Run the tool with the default file locations:
 
 ```bash
-python3 scripts/main.py
+python3 scripts/find_assignments_coi.py
 ```
 
 This writes a JSON report to `results/icse2027-affiliation-conflicts.json`.
@@ -51,7 +51,7 @@ This writes a JSON report to `results/icse2027-affiliation-conflicts.json`.
 You can also provide custom paths:
 
 ```bash
-python3 scripts/main.py \
+python3 scripts/find_assignments_coi.py \
   --preferences path/to/allprefs.csv \
   --assignments path/to/pcassignments.csv \
   --pc-info path/to/pcinfo.csv \
@@ -62,9 +62,9 @@ This writes a JSON report to the path specified in `--output`.
 
 The main script expects these CSV files by default:
 
-- `--preferences` (default: `data/icse2027-allprefs.csv`): path to a CSV file containing reviewer preferences per paper. 
-- `--assignments` (default: `data/icse2027-pcassignments.csv`): path to a CSV file with containing the paper assignment export from HotCRP.
-- `--pc-info` (default: `data/icse2027-pcinfo.csv`): path to a CSV file with PC member profile export from HotCRP.
+- `--preferences` (default: `data/example1/icse2027-allprefs.csv`): path to a CSV file containing reviewer preferences per paper. 
+- `--assignments` (default: `data/example1/icse2027-pcassignments.csv`): path to a CSV file with containing the paper assignment export from HotCRP.
+- `--pc-info` (default: `data/example1/icse2027-pcinfo.csv`): path to a CSV file with PC member profile export from HotCRP.
 
 
 See [data/README.md](data/README.md) for detailed documentation  on these input files. The current sample (default) files use fake names, fake emails, and dummy paper titles so the repository can be shared publicly. 

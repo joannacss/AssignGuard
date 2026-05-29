@@ -15,9 +15,11 @@ SCRIPTS_DIR = REPO_ROOT / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-spec = importlib.util.spec_from_file_location("assignguard_main", SCRIPTS_DIR / "main.py")
-main = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(main)
+spec = importlib.util.spec_from_file_location(
+    "find_assignments_coi", SCRIPTS_DIR / "find_assignments_coi.py"
+)
+find_assignments_coi = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(find_assignments_coi)
 
 
 class BuildConflictReportTests(unittest.TestCase):
@@ -58,7 +60,7 @@ class BuildConflictReportTests(unittest.TestCase):
             ("200", "other@example.test"): 20.0,
         }
 
-        report = main.build_conflict_report(assignments, pc_info, preferences)
+        report = find_assignments_coi.build_conflict_report(assignments, pc_info, preferences)
 
         self.assertEqual(report["summary"]["paper_count"], 1)
         self.assertEqual(report["summary"]["conflict_group_count"], 1)
@@ -92,7 +94,7 @@ class BuildConflictReportTests(unittest.TestCase):
             ("201", "missing@example.test"): 10.0,
         }
 
-        report = main.build_conflict_report(assignments, pc_info, preferences)
+        report = find_assignments_coi.build_conflict_report(assignments, pc_info, preferences)
 
         self.assertEqual(report["papers_with_conflicts"], [])
         self.assertEqual(report["summary"]["missing_pc_info_emails"], ["missing@example.test"])
@@ -100,11 +102,15 @@ class BuildConflictReportTests(unittest.TestCase):
 
 class FixtureAndCliTests(unittest.TestCase):
     def test_sample_fixtures_produce_two_conflicts(self):
-        preferences = main.load_preferences(REPO_ROOT / "data" / "icse2027-allprefs.csv")
-        pc_info = main.load_pc_info(REPO_ROOT / "data" / "icse2027-pcinfo.csv")
-        assignments = main.load_assignments(REPO_ROOT / "data" / "icse2027-pcassignments.csv")
+        preferences = find_assignments_coi.load_preferences(
+            REPO_ROOT / "data" / "example1" / "icse2027-allprefs.csv"
+        )
+        pc_info = find_assignments_coi.load_pc_info(REPO_ROOT / "data" / "example1" / "icse2027-pcinfo.csv")
+        assignments = find_assignments_coi.load_assignments(
+            REPO_ROOT / "data" / "example1" / "icse2027-pcassignments.csv"
+        )
 
-        report = main.build_conflict_report(assignments, pc_info, preferences)
+        report = find_assignments_coi.build_conflict_report(assignments, pc_info, preferences)
 
         self.assertEqual(report["summary"]["paper_count"], 2)
         self.assertEqual(report["summary"]["conflict_group_count"], 2)
@@ -122,7 +128,7 @@ class FixtureAndCliTests(unittest.TestCase):
             "riley.chen@cedarlabs.org",
         )
 
-    def test_main_writes_json_report_to_requested_path(self):
+    def test_cli_writes_json_report_to_requested_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "conflicts.json"
             stdout = io.StringIO()
@@ -131,19 +137,19 @@ class FixtureAndCliTests(unittest.TestCase):
                 sys,
                 "argv",
                 [
-                    "main.py",
+                    "find_assignments_coi.py",
                     "--preferences",
-                    str(REPO_ROOT / "data" / "icse2027-allprefs.csv"),
+                    str(REPO_ROOT / "data" / "example1" / "icse2027-allprefs.csv"),
                     "--assignments",
-                    str(REPO_ROOT / "data" / "icse2027-pcassignments.csv"),
+                    str(REPO_ROOT / "data" / "example1" / "icse2027-pcassignments.csv"),
                     "--pc-info",
-                    str(REPO_ROOT / "data" / "icse2027-pcinfo.csv"),
+                    str(REPO_ROOT / "data" / "example1" / "icse2027-pcinfo.csv"),
                     "--output",
                     str(output_path),
                 ],
             ):
                 with contextlib.redirect_stdout(stdout):
-                    main.main()
+                    find_assignments_coi.main()
 
             self.assertTrue(output_path.exists())
             report = json.loads(output_path.read_text(encoding="utf-8"))

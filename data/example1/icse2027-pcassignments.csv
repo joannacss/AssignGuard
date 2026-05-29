@@ -1,0 +1,25 @@
+paper,action,email,title
+101,clearreview,#pc,Understanding Placeholder Vulnerabilities in Sample Systems
+101,primaryreview,alex.carter@northbu.edu,
+101,primaryreview,morgan.lee@northbu.edu,
+101,primaryreview,jordan.kim@lakeviewit.edu,
+102,clearreview,#pc,Synthetic Benchmarks for Assignment Sanity Checks
+102,primaryreview,quinn.hughes@cedarlabs.org,
+102,primaryreview,riley.chen@cedarlabs.org,
+102,primaryreview,casey.nguyen@pinecrestrc.org,
+103,clearreview,#pc,Mock Dependency Graphs for Reproducible Experiments
+103,primaryreview,sam.patel@maplecoast.edu,
+103,primaryreview,jamie.rivera@harborcity.edu,
+103,secondaryreview,alex.carter@northbu.edu,
+104,clearreview,#pc,Evaluating Dummy Signals in Review Recommendation Pipelines
+104,primaryreview,morgan.lee@northbu.edu,
+104,primaryreview,riley.chen@cedarlabs.org,
+104,primaryreview,avery.shaw@silveroak.edu,
+105,clearreview,#pc,A Controlled Study of Fabricated Alert Prioritization
+105,primaryreview,quinn.hughes@cedarlabs.org,
+105,primaryreview,jordan.kim@lakeviewit.edu,
+105,primaryreview,sam.patel@maplecoast.edu,
+106,clearreview,#pc,Toward Privacy-Safe Public Fixtures for Program Committees
+106,primaryreview,avery.shaw@silveroak.edu,
+106,primaryreview,casey.nguyen@pinecrestrc.org,
+106,primaryreview,jamie.rivera@harborcity.edu,

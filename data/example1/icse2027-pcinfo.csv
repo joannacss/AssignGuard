@@ -1,0 +1,12 @@
+given_name,family_name,email,affiliation,orcid,country,roles,collaborators,follow
+Alex,Carter,alex.carter@northbu.edu,Northbridge University,,US,pc,,review
+Morgan,Lee,morgan.lee@northbu.edu,Northbridge University,,US,pc,,review
+Jordan,Kim,jordan.kim@lakeviewit.edu,Lakeview Institute of Technology,,CA,pc,,review
+Taylor,Brooks,taylor.brooks@desertstate.edu,Desert State University,,US,pc,,review
+Quinn,Hughes,quinn.hughes@cedarlabs.org,Cedar Labs,,GB,pc,,review
+Riley,Chen,riley.chen@cedarlabs.org,Cedar Labs,,GB,pc,,review
+Casey,Nguyen,casey.nguyen@pinecrestrc.org,Pinecrest Research Center,,AU,pc,,review
+Sam,Patel,sam.patel@maplecoast.edu,Maple Coast University,,US,pc,,review
+Jamie,Rivera,jamie.rivera@harborcity.edu,Harbor City University,,US,pc,,review
+Avery,Shaw,avery.shaw@silveroak.edu,Silver Oak College,,DE,pc,,review
+Drew,Foster,drew.foster@silveroak.edu,Silver Oak College,,DE,pc,,review

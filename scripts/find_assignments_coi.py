@@ -6,7 +6,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from utils import DATA_DIR, RESULTS_DIR
+from utils import EXAMPLE_DATA_DIR, RESULTS_DIR
 
 REVIEW_ACTIONS = {
     "primaryreview",
@@ -26,19 +26,19 @@ def parse_args():
     parser.add_argument(
         "--preferences",
         type=Path,
-        default=DATA_DIR / "icse2027-allprefs.csv",
+        default=EXAMPLE_DATA_DIR / "icse2027-allprefs.csv",
         help="Path to the preferences CSV.",
     )
     parser.add_argument(
         "--assignments",
         type=Path,
-        default=DATA_DIR / "icse2027-pcassignments.csv",
+        default=EXAMPLE_DATA_DIR / "icse2027-pcassignments.csv",
         help="Path to the HotCRP assignments CSV.",
     )
     parser.add_argument(
         "--pc-info",
         type=Path,
-        default=DATA_DIR / "icse2027-pcinfo.csv",
+        default=EXAMPLE_DATA_DIR / "icse2027-pcinfo.csv",
         help="Path to the HotCRP PC info CSV.",
     )
     parser.add_argument(

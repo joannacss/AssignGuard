@@ -1,13 +1,22 @@
 # Data Folder
 
-This holds synthetic dummy data.
-- `icse2027-allprefs.csv`: it has preferences of reviewers extracted from TPMS. Here, the higher the score, the more interested that person is in that paper. A very low negative score means the person has a conflict.
-- `icse2027-pcassignments.csv`: paper assignments information downloaded from HotCRP. This can be obtained by: 
+This holds synthetic dummy data. We have two subfolders `./example1` and `./example2`:
+ 
+- **example1**: it is default one that is used when running the `./scripts/find_assignments_coi.py` without path arguments;
+- **example2**: it is a dummy paper assignment that uses real PC information from ICSE 2027.
+
+
+Both folders have the following files:
+
+- `example1/icse2027-allprefs.csv`: it has preferences of reviewers extracted from TPMS. Here, the higher the score, the more interested that person is in that paper. A very low negative score means the person has a conflict.
+- `example1/icse2027-pcassignments.csv`: paper assignments information downloaded from HotCRP. This can be obtained by: 
   - (1) List all submitted papers https://icse2027.hotcrp.com/search?q=&t=s
   - (2) Select all > Download > Review Assignments > PC Assignments 
-- `icse2027-pcinfo.csv`: profile information of the PC members as exported by HotCRP. This can be obtained by: 
+- `example1/icse2027-pcinfo.csv`: profile information of the PC members as exported by HotCRP. This can be obtained by: 
   - (1) List all reviewers https://icse2027.hotcrp.com/users?t=re
   - (2) Select all > Download > PC Info
+
+
 
 ## Data Format
 
