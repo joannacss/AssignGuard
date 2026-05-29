@@ -12,6 +12,7 @@ import re
 from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from pathlib import Path
+from typing import Any
 
 from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 
@@ -49,7 +50,7 @@ MIN_TYPO_SIMILARITY = 0.88
 MAX_TOKEN_EDIT_DISTANCE = 2
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Find issues in reviewer affiliations in the PC info CSV, including acronyms and likely typos."
@@ -70,19 +71,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def normalize_whitespace(value):
+def normalize_whitespace(value: str) -> str:
     return " ".join(value.strip().split())
 
 
-def normalize_affiliation(value):
+def normalize_affiliation(value: str) -> str:
     return normalize_whitespace(value).casefold()
 
 
-def tokenize_affiliation(value):
+def tokenize_affiliation(value: str) -> list[str]:
     return re.findall(r"[A-Za-z0-9]+", value.casefold())
 
 
-def affiliation_initialisms(value):
+def affiliation_initialisms(value: str) -> set[str]:
     tokens = tokenize_affiliation(value)
     if not tokens:
         return set()
@@ -101,7 +102,7 @@ def affiliation_initialisms(value):
     return {variant.upper() for variant in variants if len(variant) >= 2}
 
 
-def is_acronym_like(value):
+def is_acronym_like(value: str) -> bool:
     compact = re.sub(r"[\s.\-&/]", "", value.strip())
     if len(compact) < 2 or len(compact) > 10:
         return False
@@ -109,7 +110,7 @@ def is_acronym_like(value):
     return has_letter and compact.upper() == compact
 
 
-def edit_distance(left, right):
+def edit_distance(left: str, right: str) -> int:
     rows = len(left) + 1
     cols = len(right) + 1
     matrix = [[0] * cols for _ in range(rows)]
@@ -131,8 +132,8 @@ def edit_distance(left, right):
     return matrix[-1][-1]
 
 
-def load_pc_rows(path):
-    rows = []
+def load_pc_rows(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         for index, row in enumerate(reader, start=2):
@@ -150,9 +151,11 @@ def load_pc_rows(path):
     return rows
 
 
-def build_affiliation_index(rows):
-    grouped_rows = defaultdict(list)
-    display_counts = Counter()
+def build_affiliation_index(
+    rows: list[dict[str, Any]],
+) -> tuple[dict[str, list[dict[str, Any]]], dict[str, str]]:
+    grouped_rows: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    display_counts: Counter[str] = Counter()
 
     for row in rows:
         normalized = row["normalized_affiliation"]
@@ -161,7 +164,7 @@ def build_affiliation_index(rows):
         grouped_rows[normalized].append(row)
         display_counts[row["affiliation"]] += 1
 
-    canonical_display = {}
+    canonical_display: dict[str, str] = {}
     for normalized, members in grouped_rows.items():
         canonical_display[normalized] = max(
             members,
@@ -171,8 +174,11 @@ def build_affiliation_index(rows):
     return grouped_rows, canonical_display
 
 
-def find_acronym_matches(rows, canonical_display):
-    matches = []
+def find_acronym_matches(
+    rows: list[dict[str, Any]],
+    canonical_display: dict[str, str],
+) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
     long_forms = {
         normalized: display
         for normalized, display in canonical_display.items()
@@ -185,7 +191,7 @@ def find_acronym_matches(rows, canonical_display):
             continue
 
         compact = re.sub(r"[^A-Za-z0-9]", "", affiliation).upper()
-        candidates = []
+        candidates: list[str] = []
         for normalized, display in long_forms.items():
             if normalized == row["normalized_affiliation"]:
                 continue
@@ -221,7 +227,7 @@ def find_acronym_matches(rows, canonical_display):
     return matches
 
 
-def looks_like_typo_variant(left, right):
+def looks_like_typo_variant(left: str, right: str) -> bool:
     left_tokens = tokenize_affiliation(left)
     right_tokens = tokenize_affiliation(right)
     if not left_tokens or not right_tokens:
@@ -229,7 +235,7 @@ def looks_like_typo_variant(left, right):
     if len(left_tokens) != len(right_tokens):
         return False
 
-    differing_pairs = []
+    differing_pairs: list[tuple[str, str]] = []
     for left_token, right_token in zip(left_tokens, right_tokens):
         if left_token == right_token:
             continue
@@ -249,7 +255,12 @@ def looks_like_typo_variant(left, right):
     return edit_distance(left_token, right_token) <= MAX_TOKEN_EDIT_DISTANCE
 
 
-def choose_typo_canonical(left, right, grouped_rows, canonical_display):
+def choose_typo_canonical(
+    left: str,
+    right: str,
+    grouped_rows: dict[str, list[dict[str, Any]]],
+    canonical_display: dict[str, str],
+) -> str:
     left_count = len(grouped_rows[left])
     right_count = len(grouped_rows[right])
     left_display = canonical_display[left]
@@ -259,8 +270,12 @@ def choose_typo_canonical(left, right, grouped_rows, canonical_display):
     return left if left_score >= right_score else right
 
 
-def find_typo_matches(rows, grouped_rows, canonical_display):
-    findings_by_row = {}
+def find_typo_matches(
+    rows: list[dict[str, Any]],
+    grouped_rows: dict[str, list[dict[str, Any]]],
+    canonical_display: dict[str, str],
+) -> list[dict[str, Any]]:
+    findings_by_row: dict[int, dict[str, Any]] = {}
     normalized_affiliations = sorted(grouped_rows)
 
     for index, left in enumerate(normalized_affiliations):
@@ -287,11 +302,11 @@ def find_typo_matches(rows, grouped_rows, canonical_display):
     return sorted(findings_by_row.values(), key=lambda item: item["row_number"])
 
 
-def build_reviewer_name(row):
+def build_reviewer_name(row: dict[str, Any]) -> str:
     return " ".join(part for part in [row["given_name"], row["family_name"]] if part) or row["email"]
 
 
-def build_report(rows):
+def build_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     grouped_rows, canonical_display = build_affiliation_index(rows)
     acronym_findings = find_acronym_matches(rows, canonical_display)
     typo_findings = find_typo_matches(rows, grouped_rows, canonical_display)
@@ -312,7 +327,7 @@ def build_report(rows):
     }
 
 
-def main():
+def main() -> None:
     args = parse_args()
     rows = load_pc_rows(args.pc_info)
     report = build_report(rows)

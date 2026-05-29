@@ -9,12 +9,13 @@ import argparse
 import json
 from collections import Counter
 from pathlib import Path
+from typing import Any, Optional
 
 from find_assignments_coi import load_assignments, load_pc_info, load_preferences
 from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Recommend replacement reviewers for papers reported by find_assignments_coi.py, "
@@ -60,12 +61,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_conflict_report(path):
+def load_conflict_report(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as handle:
         return json.load(handle)
 
 
-def display_name(profile, email):
+def display_name(profile: Optional[dict[str, str]], email: str) -> str:
     if profile is None:
         return email
     return " ".join(
@@ -73,7 +74,12 @@ def display_name(profile, email):
     ) or email
 
 
-def serialize_candidate(email, score, workload, pc_info):
+def serialize_candidate(
+    email: str,
+    score: float,
+    workload: int,
+    pc_info: dict[str, dict[str, str]],
+) -> dict[str, Any]:
     profile = pc_info.get(email)
     return {
         "name": display_name(profile, email),
@@ -84,48 +90,61 @@ def serialize_candidate(email, score, workload, pc_info):
     }
 
 
-def serialize_replaced_reviewer(reviewer, workloads):
+def serialize_replaced_reviewer(
+    reviewer: dict[str, Any],
+    workloads: Counter[str],
+) -> dict[str, Any]:
     email = reviewer["email"]
     enriched = dict(reviewer)
     enriched["current_workload"] = workloads[email]
     return enriched
 
 
-def current_workloads(assignments):
-    counts = Counter()
+def current_workloads(assignments: dict[str, dict[str, Any]]) -> Counter[str]:
+    counts: Counter[str] = Counter()
     for paper_data in assignments.values():
         for reviewer in paper_data["reviewers"]:
             counts[reviewer["email"]] += 1
     return counts
 
 
-def assigned_reviewers_for_paper(assignments, paper):
+def assigned_reviewers_for_paper(
+    assignments: dict[str, dict[str, Any]],
+    paper: str,
+) -> set[str]:
     return {
         reviewer["email"]
         for reviewer in assignments.get(paper, {}).get("reviewers", [])
     }
 
 
-def conflict_reviewers_for_paper(paper_report):
-    reviewers = []
+def conflict_reviewers_for_paper(paper_report: dict[str, Any]) -> list[dict[str, Any]]:
+    reviewers: list[dict[str, Any]] = []
     for conflict in paper_report["conflicts"]:
         reviewers.extend(conflict["conflict_reviewers"])
     return reviewers
 
 
-def candidate_sort_key(candidate):
+def candidate_sort_key(candidate: dict[str, Any]) -> tuple[float, int, str]:
     return (-candidate["tpms_score"], candidate["current_workload"], candidate["email"])
 
 
-def replacement_sort_key(paper_report):
+def replacement_sort_key(paper_report: dict[str, Any]) -> tuple[int, Any]:
     paper = str(paper_report["paper"])
     if paper.isdigit():
         return (0, int(paper))
     return (1, paper)
 
 
-def find_replacement(paper, unavailable, preferences, pc_info, workloads, max_workload):
-    candidates = []
+def find_replacement(
+    paper: str,
+    unavailable: set[str],
+    preferences: dict[tuple[str, str], float],
+    pc_info: dict[str, dict[str, str]],
+    workloads: Counter[str],
+    max_workload: int,
+) -> Optional[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
     for (preference_paper, email), score in preferences.items():
         if preference_paper != paper:
             continue
@@ -141,15 +160,21 @@ def find_replacement(paper, unavailable, preferences, pc_info, workloads, max_wo
     return sorted(candidates, key=candidate_sort_key)[0]
 
 
-def build_reassignment_report(conflict_report, preferences, assignments, pc_info, max_workload):
+def build_reassignment_report(
+    conflict_report: dict[str, Any],
+    preferences: dict[tuple[str, str], float],
+    assignments: dict[str, dict[str, Any]],
+    pc_info: dict[str, dict[str, str]],
+    max_workload: int,
+) -> dict[str, Any]:
     workloads = current_workloads(assignments)
-    recommendations = []
-    unassigned = []
+    recommendations: list[dict[str, Any]] = []
+    unassigned: list[dict[str, Any]] = []
 
     for paper_report in sorted(conflict_report["papers_with_conflicts"], key=replacement_sort_key):
         paper = str(paper_report["paper"])
         unavailable = assigned_reviewers_for_paper(assignments, paper)
-        paper_recommendations = []
+        paper_recommendations: list[dict[str, Any]] = []
 
         for old_reviewer in conflict_reviewers_for_paper(paper_report):
             replaced_reviewer = serialize_replaced_reviewer(old_reviewer, workloads)
@@ -202,7 +227,7 @@ def build_reassignment_report(conflict_report, preferences, assignments, pc_info
     }
 
 
-def main():
+def main() -> None:
     args = parse_args()
     if args.max_workload < 1:
         raise ValueError("--max-workload must be at least 1")

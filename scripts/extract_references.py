@@ -14,16 +14,16 @@ from pypdf import PdfReader, PdfWriter
 
 from utils import BASE_DIR
 
-OUTPUT_DIR = BASE_DIR / "out"
-REFERENCE_HEADING_RE = re.compile(
+OUTPUT_DIR: Path = BASE_DIR / "out"
+REFERENCE_HEADING_RE: re.Pattern[str] = re.compile(
     r"^(references|bibliography|works cited|literature cited)$",
     re.IGNORECASE,
 )
-STOP_HEADING_PREFIX_RE = re.compile(
+STOP_HEADING_PREFIX_RE: re.Pattern[str] = re.compile(
     r"^(appendix|appendices)\b",
     re.IGNORECASE,
 )
-STOP_HEADING_EXACT_RE = re.compile(
+STOP_HEADING_EXACT_RE: re.Pattern[str] = re.compile(
     r"^(supplementary material|supplemental material|"
     r"author biography|author biographies|about the authors|biographies)$",
     re.IGNORECASE,

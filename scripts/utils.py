@@ -6,7 +6,7 @@ It centralizes data, example input, and results directories so command-line tool
 
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent.parent
-DATA_DIR = BASE_DIR / "data"
-EXAMPLE1_DATA_DIR = DATA_DIR / "example1"
-RESULTS_DIR = BASE_DIR / "results"
+BASE_DIR: Path = Path(__file__).parent.parent
+DATA_DIR: Path = BASE_DIR / "data"
+EXAMPLE1_DATA_DIR: Path = DATA_DIR / "example1"
+RESULTS_DIR: Path = BASE_DIR / "results"

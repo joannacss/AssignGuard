@@ -10,6 +10,7 @@ import csv
 import json
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 
@@ -22,7 +23,7 @@ REVIEW_ACTIONS = {
 }
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Detect papers with multiple assigned reviewers from the same institution and generate a conflict JSON report."
@@ -55,8 +56,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_preferences(path):
-    preferences = {}
+def load_preferences(path: Path) -> dict[tuple[str, str], float]:
+    preferences: dict[tuple[str, str], float] = {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
@@ -67,8 +68,8 @@ def load_preferences(path):
     return preferences
 
 
-def load_pc_info(path):
-    pc_info = {}
+def load_pc_info(path: Path) -> dict[str, dict[str, str]]:
+    pc_info: dict[str, dict[str, str]] = {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
@@ -82,8 +83,8 @@ def load_pc_info(path):
     return pc_info
 
 
-def load_assignments(path):
-    papers = {}
+def load_assignments(path: Path) -> dict[str, dict[str, Any]]:
+    papers: dict[str, dict[str, Any]] = {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
@@ -105,24 +106,28 @@ def load_assignments(path):
     return papers
 
 
-def normalize_email(email):
+def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def normalize_affiliation(affiliation):
+def normalize_affiliation(affiliation: str) -> str:
     return " ".join(affiliation.strip().lower().split())
 
 
-def reviewer_sort_key(reviewer):
+def reviewer_sort_key(reviewer: dict[str, Any]) -> tuple[float, int, str]:
     return (-reviewer["preference"], reviewer["assignment_order"], reviewer["email"])
 
 
-def build_conflict_report(assignments, pc_info, preferences):
-    report = []
-    missing_pc_info = set()
+def build_conflict_report(
+    assignments: dict[str, dict[str, Any]],
+    pc_info: dict[str, dict[str, str]],
+    preferences: dict[tuple[str, str], float],
+) -> dict[str, Any]:
+    report: list[dict[str, Any]] = []
+    missing_pc_info: set[str] = set()
 
     for paper, paper_data in sorted(assignments.items(), key=lambda item: int(item[0])):
-        reviewers_by_affiliation = defaultdict(list)
+        reviewers_by_affiliation: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for index, reviewer in enumerate(paper_data["reviewers"]):
             email = reviewer["email"]
@@ -151,7 +156,7 @@ def build_conflict_report(assignments, pc_info, preferences):
             }
             reviewers_by_affiliation[normalized_affiliation].append(enriched)
 
-        paper_conflicts = []
+        paper_conflicts: list[dict[str, Any]] = []
         for grouped_reviewers in reviewers_by_affiliation.values():
             if len(grouped_reviewers) < 2:
                 continue
@@ -191,7 +196,7 @@ def build_conflict_report(assignments, pc_info, preferences):
     }
 
 
-def serialize_reviewer(reviewer):
+def serialize_reviewer(reviewer: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": reviewer["name"],
         "email": reviewer["email"],
@@ -201,7 +206,7 @@ def serialize_reviewer(reviewer):
     }
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     preferences = load_preferences(args.preferences)
