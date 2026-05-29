@@ -3,6 +3,7 @@
 AssignGuard has a collection of utility tools to process paper submissions made on HotCRP:
 
 - find_assignments_coi.py: checks reviewer assignments for institutional conflicts. Given HotCRP exports for reviewer preferences, paper assignments, and PC member info, the tool finds papers where two or more assigned reviewers share the same affiliation. For each same-affiliation group, it keeps the reviewer with the highest preference score and reports the remaining reviewers as conflicts in a JSON file.
+- reassign_papers.py: recommends replacement reviewers for the conflicted reviewers reported by find_assignments_coi.py. It ranks candidates by TPMS score and skips reviewers whose current workload has reached the configured maximum.
 - extract_references.py: given PDFs as input, it will create a new PDF containing only pages listing references.
 - find_institution_name_issues.py: utility script to help catch problems in the institution information on HotCRP.
 
@@ -58,6 +59,7 @@ python3 scripts/find_assignments_coi.py \
   --output path/to/conflicts.json
 ```
 This writes a JSON report to the path specified in `--output`.
+
 #### Input
 
 The main script expects these CSV files by default:
@@ -106,6 +108,32 @@ With the synthetic sample data included in this repository, the tool reports two
 - Affiliation matching is case-insensitive and ignores repeated whitespace.
 - Reviewer emails are normalized to lowercase before matching.
 - Review actions considered by the script are `primaryreview`, `secondaryreview`, `optionalreview`, `review`, and `metareview`.
+
+
+### reassign_papers.py: script for replacement reviewer recommendations
+
+After generating the conflict report, recommend replacement reviewers with the highest TPMS scores:
+
+```bash
+python3 scripts/reassign_papers.py
+```
+
+This reads `results/icse2027-affiliation-conflicts.json` and writes
+`results/icse2027-reassignment-recommendations.json`.
+
+You can also provide custom paths and a workload threshold:
+
+```bash
+python3 scripts/reassign_papers.py \
+  --conflicts path/to/conflicts.json \
+  --preferences path/to/allprefs.csv \
+  --assignments path/to/pcassignments.csv \
+  --pc-info path/to/pcinfo.csv \
+  --max-workload 14 \
+  --output path/to/reassignments.json
+```
+
+For each conflicted reviewer in the input JSON, the script recommends one new reviewer. It excludes reviewers already assigned to that paper, excludes reviewers whose current workload is already at `--max-workload`, and updates workloads as it makes recommendations so later recommendations in the same run respect the same limit.
 
 
 ### extract_references.py: script to extract reference pages from PDFs.

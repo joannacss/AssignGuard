@@ -1,3 +1,9 @@
+"""
+This test module verifies suspicious institution-name detection.
+It covers acronym and typo findings as well as the command-line JSON report workflow.
+@Author: Joanna C. S. Santos
+"""
+
 import contextlib
 import importlib.util
 import io

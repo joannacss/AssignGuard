@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+This script detects paper assignments with institutional conflicts among reviewers.
+It reads HotCRP assignment, PC info, and TPMS preference exports, then reports papers where multiple assigned reviewers share the same affiliation.
+@Author: Joanna C. S. Santos
+"""
 
 import argparse
 import csv

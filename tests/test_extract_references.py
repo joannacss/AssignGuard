@@ -1,3 +1,9 @@
+"""
+This test module verifies reference-page detection and extraction behavior.
+It covers the PDF reference extraction helper functions and command-line workflow.
+@Author: Joanna C. S. Santos
+"""
+
 import contextlib
 import importlib.util
 import io

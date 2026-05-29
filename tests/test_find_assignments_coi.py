@@ -1,3 +1,9 @@
+"""
+This test module verifies institutional conflict detection for paper assignments.
+It covers reviewer grouping, conflict reporting, sample fixtures, and the CLI output.
+@Author: Joanna C. S. Santos
+"""
+
 import contextlib
 import importlib.util
 import io

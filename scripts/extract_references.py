@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+This script extracts pages that contain reference sections from PDF papers.
+It accepts a single PDF or a folder of PDFs and writes extracted reference-page PDFs to the repository output directory.
+@Author: Joanna C. S. Santos
+"""
 
 import argparse
 import re

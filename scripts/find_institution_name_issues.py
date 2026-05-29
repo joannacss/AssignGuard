@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+This script finds suspicious institution names in HotCRP PC info exports.
+It reports likely acronym and typo variants so institution names can be cleaned before running assignment conflict detection.
+@Author: Joanna C. S. Santos
+"""
 
 import argparse
 import csv
