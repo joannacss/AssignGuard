@@ -45,6 +45,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                                     "email": "old@example.test",
                                     "affiliation": "Shared University",
                                     "assignment_role": "primaryreview",
+                                    "round": "Main",
                                     "preference": 4.0,
                                 }
                             ],
@@ -74,6 +75,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                 "family_name": "Match",
                 "email": "best@example.test",
                 "affiliation": "Independent Lab",
+                "tags": "RegRev",
             }
         }
 
@@ -107,6 +109,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                                     "email": "old@example.test",
                                     "affiliation": "Shared University",
                                     "assignment_role": "primaryreview",
+                                    "round": "Main_AR",
                                     "preference": 4.0,
                                 }
                             ],
@@ -118,6 +121,22 @@ class ReassignmentRecommendationTests(unittest.TestCase):
         preferences = {
             ("201", "busy@example.test"): 30.0,
             ("201", "available@example.test"): 12.0,
+        }
+        pc_info = {
+            "busy@example.test": {
+                "given_name": "Busy",
+                "family_name": "Reviewer",
+                "email": "busy@example.test",
+                "affiliation": "Busy Lab",
+                "tags": "RegRev",
+            },
+            "available@example.test": {
+                "given_name": "Available",
+                "family_name": "Reviewer",
+                "email": "available@example.test",
+                "affiliation": "Available Lab",
+                "tags": "RegRev",
+            },
         }
         assignments = {
             "201": {
@@ -132,7 +151,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
             conflict_report,
             preferences,
             assignments,
-            {},
+            pc_info,
             max_workload=2,
         )
 
@@ -156,6 +175,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                                     "email": "old@example.test",
                                     "affiliation": "Shared University",
                                     "assignment_role": "primaryreview",
+                                    "round": "Main",
                                     "preference": 4.0,
                                 }
                             ],
@@ -184,6 +204,126 @@ class ReassignmentRecommendationTests(unittest.TestCase):
         self.assertEqual(report["summary"]["unassigned_count"], 1)
         self.assertEqual(report["unassigned"][0]["paper"], "202")
         self.assertEqual(report["unassigned"][0]["replace_reviewer"]["current_workload"], 1)
+
+    def test_requires_regrev_tag_for_regular_reviewer_replacement(self):
+        conflict_report = {
+            "papers_with_conflicts": [
+                {
+                    "paper": "203",
+                    "title": "Tag Paper",
+                    "conflicts": [
+                        {
+                            "affiliation": "Shared University",
+                            "keep_reviewer": {"email": "kept@example.test", "round": "Main"},
+                            "conflict_reviewers": [
+                                {
+                                    "name": "Old Reviewer",
+                                    "email": "old@example.test",
+                                    "affiliation": "Shared University",
+                                    "assignment_role": "primaryreview",
+                                    "round": "Main",
+                                    "preference": 4.0,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        preferences = {
+            ("203", "untagged@example.test"): 30.0,
+            ("203", "regrev@example.test"): 20.0,
+        }
+        assignments = {
+            "203": {
+                "title": "Tag Paper",
+                "reviewers": [{"email": "old@example.test", "action": "review"}],
+            }
+        }
+        pc_info = {
+            "untagged@example.test": {
+                "given_name": "No",
+                "family_name": "Tag",
+                "email": "untagged@example.test",
+                "affiliation": "Untagged Lab",
+                "tags": "MetaRev",
+            },
+            "regrev@example.test": {
+                "given_name": "Regular",
+                "family_name": "Reviewer",
+                "email": "regrev@example.test",
+                "affiliation": "Tagged Lab",
+                "tags": "RegRev",
+            },
+        }
+
+        report = reassign_papers.build_reassignment_report(
+            conflict_report,
+            preferences,
+            assignments,
+            pc_info,
+            max_workload=14,
+        )
+
+        recommendation = report["reassignments"][0]["recommendations"][0]
+        self.assertEqual(recommendation["new_reviewer"]["email"], "regrev@example.test")
+
+    def test_skips_regular_meta_conflict_groups(self):
+        conflict_report = {
+            "papers_with_conflicts": [
+                {
+                    "paper": "204",
+                    "title": "Mixed Round Paper",
+                    "conflicts": [
+                        {
+                            "affiliation": "Shared University",
+                            "keep_reviewer": {"email": "meta@example.test", "round": "Main_MR"},
+                            "conflict_reviewers": [
+                                {
+                                    "name": "Old Reviewer",
+                                    "email": "old@example.test",
+                                    "affiliation": "Shared University",
+                                    "assignment_role": "primaryreview",
+                                    "round": "Main",
+                                    "preference": 4.0,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        preferences = {("204", "regrev@example.test"): 20.0}
+        assignments = {
+            "204": {
+                "title": "Mixed Round Paper",
+                "reviewers": [
+                    {"email": "meta@example.test", "action": "review"},
+                    {"email": "old@example.test", "action": "review"},
+                ],
+            }
+        }
+        pc_info = {
+            "regrev@example.test": {
+                "given_name": "Regular",
+                "family_name": "Reviewer",
+                "email": "regrev@example.test",
+                "affiliation": "Tagged Lab",
+                "tags": "RegRev",
+            }
+        }
+
+        report = reassign_papers.build_reassignment_report(
+            conflict_report,
+            preferences,
+            assignments,
+            pc_info,
+            max_workload=14,
+        )
+
+        self.assertEqual(report["reassignments"], [])
+        self.assertEqual(report["summary"]["skipped_count"], 1)
+        self.assertEqual(report["summary"]["replacement_count"], 0)
 
 
 class ReassignmentCliTests(unittest.TestCase):

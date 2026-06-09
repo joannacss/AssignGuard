@@ -74,7 +74,7 @@ PC member profile export from HotCRP.
 **Header:**
 
 ```text
-given_name,family_name,email,affiliation,orcid,country,roles,collaborators,follow
+given_name,family_name,email,affiliation,orcid,country,roles,tags,collaborators,follow
 ```
 
 **Fields used by the script:**
@@ -83,6 +83,7 @@ given_name,family_name,email,affiliation,orcid,country,roles,collaborators,follo
 - `family_name`: Reviewer's last name.
 - `email`: Reviewer's email address. This is the join key to match assignments and preferences.
 - `affiliation`: Institution name used to detect same-institution assignments.
+- `tags`: HotCRP PC tags. The reassignment script uses `RegRev` to identify regular-reviewer candidates.
 
 **Additional fields:**
 
@@ -92,7 +93,7 @@ given_name,family_name,email,affiliation,orcid,country,roles,collaborators,follo
 - `collaborators`
 - `follow`
 
-The current script ignores those additional fields, but they can remain in the export unchanged.
+Fields not listed above can remain in the export unchanged.
 
 ### Matching Rules
 

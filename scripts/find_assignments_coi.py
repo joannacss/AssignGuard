@@ -79,6 +79,7 @@ def load_pc_info(path: Path) -> dict[str, dict[str, str]]:
                 "family_name": row["family_name"].strip(),
                 "email": email,
                 "affiliation": row["affiliation"].strip(),
+                "tags": (row.get("tags") or "").strip(),
             }
     return pc_info
 
@@ -97,7 +98,7 @@ def load_assignments(path: Path) -> dict[str, dict[str, Any]]:
                 continue
 
             if action in REVIEW_ACTIONS:
-                round_value = (row.get("round") or "").strip() or None
+                round_value = (row.get("round") or "").strip() or "Main"
                 papers[paper]["reviewers"].append(
                     {
                         "email": normalize_email(row["email"]),

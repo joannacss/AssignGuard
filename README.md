@@ -133,7 +133,7 @@ python3 scripts/reassign_papers.py \
   --output path/to/reassignments.json
 ```
 
-For each conflicted reviewer in the input JSON, the script recommends one new reviewer. It excludes reviewers already assigned to that paper, excludes reviewers whose current workload is already at `--max-workload`, and updates workloads as it makes recommendations so later recommendations in the same run respect the same limit.
+For each conflicted regular reviewer in the input JSON, the script recommends one new reviewer. It only replaces `Main` and `Main_AR` reviewers with PC members whose `tags` include `RegRev`. It skips conflict groups that mix regular reviewers with a `Main_MR` metareviewer, excludes reviewers already assigned to that paper, excludes reviewers whose current workload is already at `--max-workload`, and updates workloads as it makes recommendations so later recommendations in the same run respect the same limit.
 
 
 ### extract_references.py: script to extract reference pages from PDFs.
