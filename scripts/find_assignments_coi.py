@@ -97,10 +97,12 @@ def load_assignments(path: Path) -> dict[str, dict[str, Any]]:
                 continue
 
             if action in REVIEW_ACTIONS:
+                round_value = (row.get("round") or "").strip() or None
                 papers[paper]["reviewers"].append(
                     {
                         "email": normalize_email(row["email"]),
                         "action": action,
+                        "round": round_value,
                     }
                 )
     return papers
@@ -151,6 +153,7 @@ def build_conflict_report(
                 "name": display_name,
                 "affiliation": affiliation,
                 "assignment_role": reviewer["action"],
+                "round": reviewer.get("round"),
                 "preference": preferences.get((paper, email), 0.0),
                 "assignment_order": index,
             }
@@ -202,6 +205,7 @@ def serialize_reviewer(reviewer: dict[str, Any]) -> dict[str, Any]:
         "email": reviewer["email"],
         "affiliation": reviewer["affiliation"],
         "assignment_role": reviewer["assignment_role"],
+        "round": reviewer.get("round"),
         "preference": reviewer["preference"],
     }
 

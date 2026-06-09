@@ -74,8 +74,10 @@ class BuildConflictReportTests(unittest.TestCase):
         conflict = report["papers_with_conflicts"][0]["conflicts"][0]
         self.assertEqual(conflict["affiliation"], "Shared University")
         self.assertEqual(conflict["keep_reviewer"]["email"], "winner@example.test")
+        self.assertIsNone(conflict["keep_reviewer"]["round"])
         self.assertEqual(conflict["conflict_reviewers"][0]["email"], "loser@example.test")
         self.assertEqual(conflict["conflict_reviewers"][0]["assignment_role"], "secondaryreview")
+        self.assertIsNone(conflict["conflict_reviewers"][0]["round"])
 
     def test_missing_pc_info_is_reported_but_not_grouped_as_conflict(self):
         assignments = {
@@ -104,6 +106,28 @@ class BuildConflictReportTests(unittest.TestCase):
 
         self.assertEqual(report["papers_with_conflicts"], [])
         self.assertEqual(report["summary"]["missing_pc_info_emails"], ["missing@example.test"])
+
+    def test_load_assignments_preserves_reviewer_round_when_present(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            assignments_path = Path(tmpdir) / "assignments.csv"
+            assignments_path.write_text(
+                "\n".join(
+                    [
+                        "paper,action,email,round,title",
+                        "301,clearreview,#pc,,Round Trip Paper",
+                        "301,primaryreview,reviewer@example.test,Main,",
+                        "301,metareview,meta@example.test,Main_MR,",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            assignments = find_assignments_coi.load_assignments(assignments_path)
+
+        self.assertEqual(assignments["301"]["title"], "Round Trip Paper")
+        self.assertEqual(assignments["301"]["reviewers"][0]["round"], "Main")
+        self.assertEqual(assignments["301"]["reviewers"][1]["round"], "Main_MR")
 
 
 class FixtureAndCliTests(unittest.TestCase):
