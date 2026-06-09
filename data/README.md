@@ -45,7 +45,7 @@ Paper assignment export from HotCRP.
 **Header:**
 
 ```text
-paper,action,email,title
+paper,action,email,round,title
 ```
 
 **Fields:**
@@ -59,6 +59,7 @@ paper,action,email,title
   - `review`
   - `metareview`
 - `email`: Assigned reviewer's email for review-action rows. On `clearreview` rows this may be `#pc`.
+- `round`: There are three rounds of reviews (`Main`, `Main_AR`, `Main_MR`). `Main` and `Main_AR` are regular reviewers (the difference is that the latter is also an artifact evaluator, meaning that besides writing the review, they also do a lightweight check over the paper's artifacts). The `Main_MR` is the metareviewer.
 - `title`: Paper title. The script reads this from the `clearreview` row for each paper and includes it in the JSON output.
 
 _**Expected pattern:**_
