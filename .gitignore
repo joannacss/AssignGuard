@@ -1,9 +1,8 @@
 # Project-specific stuff
-/results/example2-affiliation-conflicts.json
-/data/example2/icse2027-allprefs.csv
-/data/example2/icse2027-pcassignments.csv
-/data/example2/icse2027-pcinfo.csv
-/results/example2-reassignment-recommendations.json
+/data/example2/*.csv
+/results/example2-*.json
+/data/example3/*.csv
+/results/example3-*.json
 
 # OS generated files #
 .DS_Store
