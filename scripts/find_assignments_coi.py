@@ -79,6 +79,7 @@ def load_pc_info(path: Path) -> dict[str, dict[str, str]]:
                 "family_name": row["family_name"].strip(),
                 "email": email,
                 "affiliation": row["affiliation"].strip(),
+                "roles": (row.get("roles") or "").strip(),
                 "tags": (row.get("tags") or "").strip(),
             }
     return pc_info

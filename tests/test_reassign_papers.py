@@ -38,7 +38,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                     "conflicts": [
                         {
                             "affiliation": "Shared University",
-                            "keep_reviewer": {"email": "kept@example.test"},
+                            "keep_reviewer": {"email": "kept@example.test", "preference": 15.0},
                             "conflict_reviewers": [
                                 {
                                     "name": "Old Reviewer",
@@ -102,7 +102,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                     "conflicts": [
                         {
                             "affiliation": "Shared University",
-                            "keep_reviewer": {"email": "kept@example.test"},
+                            "keep_reviewer": {"email": "kept@example.test", "preference": 15.0},
                             "conflict_reviewers": [
                                 {
                                     "name": "Old Reviewer",
@@ -168,7 +168,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                     "conflicts": [
                         {
                             "affiliation": "Shared University",
-                            "keep_reviewer": {"email": "kept@example.test"},
+                            "keep_reviewer": {"email": "kept@example.test", "preference": 15.0},
                             "conflict_reviewers": [
                                 {
                                     "name": "Old Reviewer",
@@ -214,7 +214,11 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                     "conflicts": [
                         {
                             "affiliation": "Shared University",
-                            "keep_reviewer": {"email": "kept@example.test", "round": "Main"},
+                            "keep_reviewer": {
+                                "email": "kept@example.test",
+                                "round": "Main",
+                                "preference": 15.0,
+                            },
                             "conflict_reviewers": [
                                 {
                                     "name": "Old Reviewer",
@@ -268,7 +272,7 @@ class ReassignmentRecommendationTests(unittest.TestCase):
         recommendation = report["reassignments"][0]["recommendations"][0]
         self.assertEqual(recommendation["new_reviewer"]["email"], "regrev@example.test")
 
-    def test_skips_regular_meta_conflict_groups(self):
+    def test_replaces_regular_reviewer_in_regular_meta_conflict_group(self):
         conflict_report = {
             "papers_with_conflicts": [
                 {
@@ -277,7 +281,11 @@ class ReassignmentRecommendationTests(unittest.TestCase):
                     "conflicts": [
                         {
                             "affiliation": "Shared University",
-                            "keep_reviewer": {"email": "meta@example.test", "round": "Main_MR"},
+                            "keep_reviewer": {
+                                "email": "meta@example.test",
+                                "round": "Main_MR",
+                                "preference": 15.0,
+                            },
                             "conflict_reviewers": [
                                 {
                                     "name": "Old Reviewer",
@@ -321,9 +329,149 @@ class ReassignmentRecommendationTests(unittest.TestCase):
             max_workload=14,
         )
 
-        self.assertEqual(report["reassignments"], [])
-        self.assertEqual(report["summary"]["skipped_count"], 1)
-        self.assertEqual(report["summary"]["replacement_count"], 0)
+        recommendation = report["reassignments"][0]["recommendations"][0]
+        self.assertEqual(recommendation["replace_reviewer"]["email"], "old@example.test")
+        self.assertEqual(recommendation["new_reviewer"]["email"], "regrev@example.test")
+        self.assertEqual(report["summary"]["skipped_count"], 0)
+        self.assertEqual(report["summary"]["replacement_count"], 1)
+
+    def test_replaces_meta_reviewer_with_area_chair(self):
+        conflict_report = {
+            "papers_with_conflicts": [
+                {
+                    "paper": "205",
+                    "title": "Meta Round Paper",
+                    "conflicts": [
+                        {
+                            "affiliation": "Shared University",
+                            "keep_reviewer": {
+                                "email": "regular@example.test",
+                                "round": "Main",
+                                "preference": 30.0,
+                            },
+                            "conflict_reviewers": [
+                                {
+                                    "name": "Old Meta",
+                                    "email": "old-meta@example.test",
+                                    "affiliation": "Shared University",
+                                    "assignment_role": "primaryreview",
+                                    "round": "Main_MR",
+                                    "preference": 10.0,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        preferences = {
+            ("205", "regular-candidate@example.test"): 100.0,
+            ("205", "area-chair@example.test"): 80.0,
+        }
+        assignments = {
+            "205": {
+                "title": "Meta Round Paper",
+                "reviewers": [
+                    {"email": "regular@example.test", "action": "review"},
+                    {"email": "old-meta@example.test", "action": "review"},
+                ],
+            }
+        }
+        pc_info = {
+            "regular-candidate@example.test": {
+                "given_name": "Regular",
+                "family_name": "Candidate",
+                "email": "regular-candidate@example.test",
+                "affiliation": "Regular Lab",
+                "roles": "pc",
+                "tags": "RegRev",
+            },
+            "area-chair@example.test": {
+                "given_name": "Area",
+                "family_name": "Chair",
+                "email": "area-chair@example.test",
+                "affiliation": "Chair Lab",
+                "roles": "pc",
+                "tags": "AreaChair",
+            },
+        }
+
+        report = reassign_papers.build_reassignment_report(
+            conflict_report,
+            preferences,
+            assignments,
+            pc_info,
+            max_workload=14,
+        )
+
+        recommendation = report["reassignments"][0]["recommendations"][0]
+        self.assertEqual(recommendation["replace_reviewer"]["email"], "old-meta@example.test")
+        self.assertEqual(recommendation["new_reviewer"]["email"], "area-chair@example.test")
+
+    def test_reranks_conflict_group_by_preference_before_replacing(self):
+        conflict_report = {
+            "papers_with_conflicts": [
+                {
+                    "paper": "206",
+                    "title": "Rerank Paper",
+                    "conflicts": [
+                        {
+                            "affiliation": "Shared University",
+                            "keep_reviewer": {
+                                "name": "Lower Preference",
+                                "email": "lower@example.test",
+                                "affiliation": "Shared University",
+                                "assignment_role": "primaryreview",
+                                "round": "Main",
+                                "preference": 4.0,
+                            },
+                            "conflict_reviewers": [
+                                {
+                                    "name": "Higher Preference",
+                                    "email": "higher@example.test",
+                                    "affiliation": "Shared University",
+                                    "assignment_role": "primaryreview",
+                                    "round": "Main",
+                                    "preference": 20.0,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        preferences = {("206", "candidate@example.test"): 30.0}
+        assignments = {
+            "206": {
+                "title": "Rerank Paper",
+                "reviewers": [
+                    {"email": "lower@example.test", "action": "review"},
+                    {"email": "higher@example.test", "action": "review"},
+                ],
+            }
+        }
+        pc_info = {
+            "candidate@example.test": {
+                "given_name": "Replacement",
+                "family_name": "Reviewer",
+                "email": "candidate@example.test",
+                "affiliation": "Replacement Lab",
+                "roles": "pc",
+                "tags": "RegRev",
+            }
+        }
+
+        report = reassign_papers.build_reassignment_report(
+            conflict_report,
+            preferences,
+            assignments,
+            pc_info,
+            max_workload=14,
+        )
+
+        recommendation = report["reassignments"][0]["recommendations"][0]
+        self.assertEqual(recommendation["replace_reviewer"]["email"], "lower@example.test")
+        self.assertEqual(recommendation["new_reviewer"]["email"], "candidate@example.test")
 
 
 class ReassignmentCliTests(unittest.TestCase):

@@ -83,7 +83,7 @@ given_name,family_name,email,affiliation,orcid,country,roles,tags,collaborators,
 - `family_name`: Reviewer's last name.
 - `email`: Reviewer's email address. This is the join key to match assignments and preferences.
 - `affiliation`: Institution name used to detect same-institution assignments.
-- `tags`: HotCRP PC tags. The reassignment script uses `RegRev` to identify regular-reviewer candidates.
+- `tags`: HotCRP PC tags. The reassignment script uses `RegRev` to identify regular-reviewer candidates and `AreaChair` to identify metareviewer candidates.
 
 **Additional fields:**
 

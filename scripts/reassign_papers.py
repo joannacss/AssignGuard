@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-This script recommends replacement reviewers for regular-reviewer conflicts detected by `find_assignments_coi.py`.
-It reads the COI JSON report, TPMS preference scores, HotCRP assignments, and PC info, then selects the highest-scoring available replacement for each conflicted `Main` or `Main_AR` reviewer.
-Replacement candidates must have the `RegRev` PC tag, must not already be assigned to the paper, and must be below the maximum workload specified by program argument.
-Conflict groups that mix regular reviewers with `Main_MR` metareviewers are skipped instead of reassigned.
+This script recommends replacement reviewers for assignment conflicts detected by `find_assignments_coi.py`.
+It reads the COI JSON report, TPMS preference scores, HotCRP assignments, and PC info, then keeps the highest-preference reviewer in each conflict group and replaces the remaining reviewers.
+Replacement candidates must match the removed reviewer's assignment type, must not already be assigned to the paper, and must be below the maximum workload specified by program argument.
+`Main` and `Main_AR` reviewers are replaced with `RegRev` PC members, while `Main_MR` metareviewers are replaced with `AreaChair` PC members.
 @Author: Joanna C. S. Santos
 """
 import argparse
@@ -18,6 +18,7 @@ from utils import EXAMPLE1_DATA_DIR, RESULTS_DIR
 REGULAR_REVIEW_ROUNDS = {"Main", "Main_AR"}
 META_REVIEW_ROUNDS = {"Main_MR"}
 REGULAR_REVIEWER_TAG = "RegRev"
+META_REVIEWER_ROLE = "AreaChair"
 
 
 def parse_args() -> argparse.Namespace:
@@ -85,8 +86,18 @@ def reviewer_tags(profile: Optional[dict[str, str]]) -> set[str]:
     return set(profile.get("tags", "").split())
 
 
+def reviewer_roles(profile: Optional[dict[str, str]]) -> set[str]:
+    if profile is None:
+        return set()
+    return set(profile.get("roles", "").split())
+
+
 def reviewer_has_tag(profile: Optional[dict[str, str]], tag: str) -> bool:
     return tag in reviewer_tags(profile)
+
+
+def reviewer_has_role_or_tag(profile: Optional[dict[str, str]], value: str) -> bool:
+    return value in reviewer_roles(profile) or value in reviewer_tags(profile)
 
 
 def serialize_candidate(
@@ -149,11 +160,13 @@ def conflict_group_reviewers(conflict: dict[str, Any]) -> list[dict[str, Any]]:
     return [conflict["keep_reviewer"]] + conflict["conflict_reviewers"]
 
 
-def has_regular_meta_mix(conflict: dict[str, Any]) -> bool:
-    rounds = {reviewer_round(reviewer) for reviewer in conflict_group_reviewers(conflict)}
-    return any(is_regular_review_round(round_name) for round_name in rounds) and any(
-        is_meta_review_round(round_name) for round_name in rounds
-    )
+def reviewer_preference_sort_key(reviewer: dict[str, Any]) -> tuple[float, str]:
+    return (-float(reviewer.get("preference", 0.0)), reviewer["email"])
+
+
+def reviewers_to_replace(conflict: dict[str, Any]) -> list[dict[str, Any]]:
+    ranked_reviewers = sorted(conflict_group_reviewers(conflict), key=reviewer_preference_sort_key)
+    return ranked_reviewers[1:]
 
 
 def candidate_sort_key(candidate: dict[str, Any]) -> tuple[float, int, str]:
@@ -174,7 +187,7 @@ def find_replacement(
     pc_info: dict[str, dict[str, str]],
     workloads: Counter[str],
     max_workload: int,
-    required_tag: Optional[str],
+    required_pc_assignment: str,
 ) -> Optional[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     for (preference_paper, email), score in preferences.items():
@@ -185,7 +198,10 @@ def find_replacement(
         workload = workloads[email]
         if workload >= max_workload:
             continue
-        if required_tag and not reviewer_has_tag(pc_info.get(email), required_tag):
+        profile = pc_info.get(email)
+        if required_pc_assignment == "regular" and not reviewer_has_tag(profile, REGULAR_REVIEWER_TAG):
+            continue
+        if required_pc_assignment == "meta" and not reviewer_has_role_or_tag(profile, META_REVIEWER_ROLE):
             continue
         candidates.append(serialize_candidate(email, score, workload, pc_info))
 
@@ -212,26 +228,19 @@ def build_reassignment_report(
         paper_recommendations: list[dict[str, Any]] = []
 
         for conflict in paper_report["conflicts"]:
-            if has_regular_meta_mix(conflict):
-                skipped.append(
-                    {
-                        "paper": paper,
-                        "title": paper_report.get("title", ""),
-                        "conflict": conflict,
-                        "reason": "Skipped conflict group containing both regular and meta reviewers.",
-                    }
-                )
-                continue
-
-            for old_reviewer in conflict["conflict_reviewers"]:
+            for old_reviewer in reviewers_to_replace(conflict):
                 old_round = reviewer_round(old_reviewer)
-                if not is_regular_review_round(old_round):
+                if is_regular_review_round(old_round):
+                    required_pc_assignment = "regular"
+                elif is_meta_review_round(old_round):
+                    required_pc_assignment = "meta"
+                else:
                     skipped.append(
                         {
                             "paper": paper,
                             "title": paper_report.get("title", ""),
                             "replace_reviewer": old_reviewer,
-                            "reason": "Only Main and Main_AR reviewer replacements are supported.",
+                            "reason": "Only Main, Main_AR, and Main_MR reviewer replacements are supported.",
                         }
                     )
                     continue
@@ -244,7 +253,7 @@ def build_reassignment_report(
                     pc_info,
                     workloads,
                     max_workload,
-                    REGULAR_REVIEWER_TAG,
+                    required_pc_assignment,
                 )
                 if replacement is None:
                     unassigned.append(
@@ -252,7 +261,7 @@ def build_reassignment_report(
                             "paper": paper,
                             "title": paper_report.get("title", ""),
                             "replace_reviewer": replaced_reviewer,
-                            "reason": "No available reviewer with a TPMS score, required PC tag, and workload under the limit.",
+                            "reason": "No available reviewer with a TPMS score, matching PC assignment type, and workload under the limit.",
                         }
                     )
                     continue
