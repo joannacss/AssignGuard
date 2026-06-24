@@ -372,10 +372,14 @@ class ReassignmentRecommendationTests(unittest.TestCase):
             "205": {
                 "title": "Meta Round Paper",
                 "reviewers": [
-                    {"email": "regular@example.test", "action": "review"},
-                    {"email": "old-meta@example.test", "action": "review"},
+                    {"email": "regular@example.test", "action": "review", "round": "Main"},
+                    {"email": "old-meta@example.test", "action": "review", "round": "Main_MR"},
                 ],
-            }
+            },
+            "300": {
+                "title": "Regular Workload Paper",
+                "reviewers": [{"email": "area-chair@example.test", "action": "review", "round": "Main"}],
+            },
         }
         pc_info = {
             "regular-candidate@example.test": {
@@ -401,12 +405,94 @@ class ReassignmentRecommendationTests(unittest.TestCase):
             preferences,
             assignments,
             pc_info,
-            max_workload=14,
+            max_workload=1,
         )
 
         recommendation = report["reassignments"][0]["recommendations"][0]
         self.assertEqual(recommendation["replace_reviewer"]["email"], "old-meta@example.test")
         self.assertEqual(recommendation["new_reviewer"]["email"], "area-chair@example.test")
+        self.assertEqual(recommendation["new_reviewer"]["current_workload"], 0)
+
+    def test_uses_tpms_before_meta_workload(self):
+        conflict_report = {
+            "papers_with_conflicts": [
+                {
+                    "paper": "207",
+                    "title": "Balanced Meta Paper",
+                    "conflicts": [
+                        {
+                            "affiliation": "Shared University",
+                            "keep_reviewer": {
+                                "email": "regular@example.test",
+                                "round": "Main",
+                                "preference": 30.0,
+                            },
+                            "conflict_reviewers": [
+                                {
+                                    "name": "Old Meta",
+                                    "email": "old-meta@example.test",
+                                    "affiliation": "Shared University",
+                                    "assignment_role": "primaryreview",
+                                    "round": "Main_MR",
+                                    "preference": 10.0,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        preferences = {
+            ("207", "busy-chair@example.test"): 100.0,
+            ("207", "available-chair@example.test"): 80.0,
+        }
+        assignments = {
+            "207": {
+                "title": "Balanced Meta Paper",
+                "reviewers": [
+                    {"email": "regular@example.test", "action": "review", "round": "Main"},
+                    {"email": "old-meta@example.test", "action": "review", "round": "Main_MR"},
+                ],
+            },
+            "301": {
+                "title": "Existing Meta Paper One",
+                "reviewers": [{"email": "busy-chair@example.test", "action": "review", "round": "Main_MR"}],
+            },
+            "302": {
+                "title": "Existing Meta Paper Two",
+                "reviewers": [{"email": "busy-chair@example.test", "action": "review", "round": "Main_MR"}],
+            },
+        }
+        pc_info = {
+            "busy-chair@example.test": {
+                "given_name": "Busy",
+                "family_name": "Chair",
+                "email": "busy-chair@example.test",
+                "affiliation": "Busy Chair Lab",
+                "roles": "pc",
+                "tags": "AreaChair",
+            },
+            "available-chair@example.test": {
+                "given_name": "Available",
+                "family_name": "Chair",
+                "email": "available-chair@example.test",
+                "affiliation": "Available Chair Lab",
+                "roles": "pc",
+                "tags": "AreaChair",
+            },
+        }
+
+        report = reassign_papers.build_reassignment_report(
+            conflict_report,
+            preferences,
+            assignments,
+            pc_info,
+            max_workload=1,
+        )
+
+        recommendation = report["reassignments"][0]["recommendations"][0]
+        self.assertEqual(recommendation["new_reviewer"]["email"], "busy-chair@example.test")
+        self.assertEqual(recommendation["new_reviewer"]["current_workload"], 2)
 
     def test_reranks_conflict_group_by_preference_before_replacing(self):
         conflict_report = {

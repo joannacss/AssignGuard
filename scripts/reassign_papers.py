@@ -2,8 +2,8 @@
 """
 This script recommends replacement reviewers for assignment conflicts detected by `find_assignments_coi.py`.
 It reads the COI JSON report, TPMS preference scores, HotCRP assignments, and PC info, then keeps the highest-preference reviewer in each conflict group and replaces the remaining reviewers.
-Replacement candidates must match the removed reviewer's assignment type, must not already be assigned to the paper, and must be below the maximum workload specified by program argument.
-`Main` and `Main_AR` reviewers are replaced with `RegRev` PC members, while `Main_MR` metareviewers are replaced with `AreaChair` PC members.
+Replacement candidates must match the removed reviewer's assignment type and must not already be assigned to the paper; the maximum workload specified by program argument applies only to regular reviewers.
+`Main` and `Main_AR` reviewers are replaced with `RegRev` PC members under the maximum workload, while `Main_MR` metareviewers are replaced with eligible `AreaChair` PC members without applying the maximum workload; TPMS score is always the primary ranking criterion.
 @Author: Joanna C. S. Santos
 """
 import argparse
@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
         "--max-workload",
         type=int,
         default=14,
-        help="Maximum number of reviews allowed per reviewer.",
+        help="Maximum number of reviews allowed per regular reviewer.",
     )
     parser.add_argument(
         "--output",
@@ -131,10 +131,14 @@ def is_meta_review_round(round_name: str) -> bool:
 def serialize_replaced_reviewer(
     reviewer: dict[str, Any],
     workloads: Counter[str],
+    meta_workloads: Counter[str],
 ) -> dict[str, Any]:
     email = reviewer["email"]
     enriched = dict(reviewer)
-    enriched["current_workload"] = workloads[email]
+    if is_meta_review_round(reviewer_round(reviewer)):
+        enriched["current_workload"] = meta_workloads[email]
+    else:
+        enriched["current_workload"] = workloads[email]
     return enriched
 
 
@@ -143,6 +147,15 @@ def current_workloads(assignments: dict[str, dict[str, Any]]) -> Counter[str]:
     for paper_data in assignments.values():
         for reviewer in paper_data["reviewers"]:
             counts[reviewer["email"]] += 1
+    return counts
+
+
+def current_meta_workloads(assignments: dict[str, dict[str, Any]]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for paper_data in assignments.values():
+        for reviewer in paper_data["reviewers"]:
+            if is_meta_review_round(str(reviewer.get("round") or "")):
+                counts[reviewer["email"]] += 1
     return counts
 
 
@@ -173,6 +186,10 @@ def candidate_sort_key(candidate: dict[str, Any]) -> tuple[float, int, str]:
     return (-candidate["tpms_score"], candidate["current_workload"], candidate["email"])
 
 
+def meta_candidate_sort_key(candidate: dict[str, Any]) -> tuple[float, int, str]:
+    return (-candidate["tpms_score"], candidate["current_workload"], candidate["email"])
+
+
 def replacement_sort_key(paper_report: dict[str, Any]) -> tuple[int, Any]:
     paper = str(paper_report["paper"])
     if paper.isdigit():
@@ -186,6 +203,7 @@ def find_replacement(
     preferences: dict[tuple[str, str], float],
     pc_info: dict[str, dict[str, str]],
     workloads: Counter[str],
+    meta_workloads: Counter[str],
     max_workload: int,
     required_pc_assignment: str,
 ) -> Optional[dict[str, Any]]:
@@ -195,18 +213,21 @@ def find_replacement(
             continue
         if email in unavailable:
             continue
-        workload = workloads[email]
-        if workload >= max_workload:
-            continue
         profile = pc_info.get(email)
-        if required_pc_assignment == "regular" and not reviewer_has_tag(profile, REGULAR_REVIEWER_TAG):
-            continue
-        if required_pc_assignment == "meta" and not reviewer_has_role_or_tag(profile, META_REVIEWER_ROLE):
-            continue
+        if required_pc_assignment == "regular":
+            workload = workloads[email]
+            if workload >= max_workload or not reviewer_has_tag(profile, REGULAR_REVIEWER_TAG):
+                continue
+        else:
+            workload = meta_workloads[email]
+            if not reviewer_has_role_or_tag(profile, META_REVIEWER_ROLE):
+                continue
         candidates.append(serialize_candidate(email, score, workload, pc_info))
 
     if not candidates:
         return None
+    if required_pc_assignment == "meta":
+        return sorted(candidates, key=meta_candidate_sort_key)[0]
     return sorted(candidates, key=candidate_sort_key)[0]
 
 
@@ -218,6 +239,7 @@ def build_reassignment_report(
     max_workload: int,
 ) -> dict[str, Any]:
     workloads = current_workloads(assignments)
+    meta_workloads = current_meta_workloads(assignments)
     recommendations: list[dict[str, Any]] = []
     unassigned: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
@@ -245,13 +267,14 @@ def build_reassignment_report(
                     )
                     continue
 
-                replaced_reviewer = serialize_replaced_reviewer(old_reviewer, workloads)
+                replaced_reviewer = serialize_replaced_reviewer(old_reviewer, workloads, meta_workloads)
                 replacement = find_replacement(
                     paper,
                     unavailable,
                     preferences,
                     pc_info,
                     workloads,
+                    meta_workloads,
                     max_workload,
                     required_pc_assignment,
                 )
@@ -261,7 +284,7 @@ def build_reassignment_report(
                             "paper": paper,
                             "title": paper_report.get("title", ""),
                             "replace_reviewer": replaced_reviewer,
-                            "reason": "No available reviewer with a TPMS score, matching PC assignment type, and workload under the limit.",
+                            "reason": "No available reviewer with a TPMS score and matching PC assignment type under the applicable workload rules.",
                         }
                     )
                     continue
@@ -274,6 +297,8 @@ def build_reassignment_report(
                 )
                 unavailable.add(replacement["email"])
                 workloads[replacement["email"]] += 1
+                if required_pc_assignment == "meta":
+                    meta_workloads[replacement["email"]] += 1
 
         if paper_recommendations:
             recommendations.append(
